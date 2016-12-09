@@ -1,2 +1,10 @@
 # cl-mem
-OpenCL memory benchmark
+
+cl-mem is an OpenCL memory benchmark utility.
+
+Version 0.2 tests sequential write and sequential read speeds.
+Random read/write tests are planned for the next version.
+
+# Thanks
+
+cl-mem uses code from Marc Bevand's SILENTARMY zcash miner
