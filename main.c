@@ -14,24 +14,16 @@
 #include <errno.h>
 #include <CL/cl.h>
 #include "_kernel.h"
+#include "config.h"
 
 typedef uint8_t		uchar;
 typedef uint32_t	uint;
-#include "config.h"
 
-#define MIN(A, B)	(((A) < (B)) ? (A) : (B))
-#define MAX(A, B)	(((A) > (B)) ? (A) : (B))
+const char* test_names[] = {"write", "read", "copy"};
 
-#define NUM_TESTS 2
-#define BUF_SIZE MEMSIZE
-const char* test_names[] = {"write", "read"};
-
-int             verbose = 0;
-uint32_t	show_encoded = 0;
-uint64_t	nr_nonces = 1;
+int         verbose = 0;
 uint32_t	do_list_devices = 0;
 uint32_t	gpu_to_use = 0;
-uint32_t	mining = 0;
 
 typedef struct  debug_s
 {
@@ -427,7 +419,7 @@ void run_opencl(cl_context ctx, cl_command_queue queue, cl_kernel* tests)
 	    fatal("malloc: %s\n", strerror(errno));
     buf_dbg = check_clCreateBuffer(ctx, CL_MEM_READ_WRITE |
 	    CL_MEM_COPY_HOST_PTR, dbg_size, dbg);
-    buf_test = check_clCreateBuffer(ctx, CL_MEM_READ_WRITE, BUF_SIZE, NULL);
+    buf_test = check_clCreateBuffer(ctx, CL_MEM_READ_WRITE, MEMSIZE, NULL);
 
     uint num_tests = sizeof(test_names)/sizeof(test_names[0]);
     for (unsigned test = 0; test < num_tests; test++)
@@ -575,8 +567,8 @@ void run_bench()
     if (status != CL_SUCCESS || !program)
 	fatal("clCreateProgramWithSource (%d)\n", status);
     /* Build program. */
-    if (!mining || verbose)
-	fprintf(stderr, "Building program\n");
+    if (verbose)
+	    fprintf(stderr, "Building program\n");
     status = clBuildProgram(program, 1, &dev_id,
 	    "", // compile options
 	    NULL, NULL);

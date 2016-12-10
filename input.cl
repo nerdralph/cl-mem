@@ -58,3 +58,30 @@ void test1(__global char *buffer)
     *(__global uint *)(buffer + wave * (MEMSIZE/WAVES)) = sum;
 }
 
+/*
+ * sequential copy 1GB/2
+ * should be launched with local worksize 256
+ * WAVES should be a power of 2
+ */
+__kernel
+void test2(__global char *buffer)
+{
+    uint tid = get_global_id(0)%256;
+    uint wave = get_global_id(0)>>8;  // 256 threads per wave
+    uint block;
+    uint blockend = (MEMSIZE/sizeof(uint))/WAVES;
+    uint rep = REPS;
+    uint sum = 0;
+
+    while (rep--)
+    {
+         __global uint *p = (__global uint *)
+                            (buffer + wave * (MEMSIZE/WAVES));
+        for (block = 0; block*2 < blockend; block += 256)
+        {
+            // 1st half of block is src, 2nd half is dst
+            *(p + blockend/2 + block + tid) = *(p + block + tid);
+        }
+    }
+}
+
