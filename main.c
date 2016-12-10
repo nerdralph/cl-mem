@@ -631,7 +631,7 @@ static struct option    optlong[] =
 void usage(const char *progname)
 {
     printf("Usage: %s [options]\n"
-	    "OpenCL memory benchmark v0.2\n"
+	    "OpenCL memory benchmark v0.3\n"
 	    "\n"
 	    "Options are:\n"
             "  -h, --help     display this help and exit\n"
