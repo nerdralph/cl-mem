@@ -4,6 +4,12 @@
  * OpenCL memory benchmarks 
  */
 
+/* each group of threads aka WAVE uses a different section of memory */
+#define DTYPE ulong
+#define BLOCKEND ((MEMSIZE/sizeof(DTYPE))/WAVES)
+#define INITPTR __global DTYPE *p = (__global DTYPE *)\
+                                    (buffer + wave * (MEMSIZE/WAVES))
+
 /*
  * sequential write 1GB
  * should be launched with local worksize 256
@@ -14,17 +20,16 @@ void test0(__global char *buffer)
 {
     uint tid = get_global_id(0)%256;
     uint wave = get_global_id(0)>>8;  // 256 threads per wave
+    DTYPE data = get_global_id(0) << 16;
     uint block;
-    uint blockend = (MEMSIZE/sizeof(uint))/WAVES;
     uint rep = REPS;
 
     while (rep--)
     {
-         __global uint *p = (__global uint *)
-                            (buffer + wave * (MEMSIZE/WAVES));
-        for (block = 0; block < blockend; block += 256)
+        INITPTR;
+        for (block = 0; block < BLOCKEND; block += 256)
         {
-            *(p + block + tid) = tid;
+            *(p + block + tid) = data;
         }
     }
 }
@@ -40,22 +45,19 @@ void test1(__global char *buffer)
     uint tid = get_global_id(0)%256;
     uint wave = get_global_id(0)>>8;  // 256 threads per wave
     uint block;
-    uint blockend = (MEMSIZE/sizeof(uint))/WAVES;
     uint rep = REPS;
-    uint sum = 0;
+    DTYPE sum = 0;
 
     while (rep--)
     {
-         __global uint *p = (__global uint *)
-                            (buffer + wave * (MEMSIZE/WAVES));
-        for (block = 0; block < blockend; block += 256)
+        INITPTR;
+        for (block = 0; block < BLOCKEND; block += 256)
         {
             sum += *(p + block + tid);
         }
-        //*(p + block + tid) = sum;
     }
     // write sum to keep compiler from optimizing away the whole kernel
-    *(__global uint *)(buffer + wave * (MEMSIZE/WAVES)) = sum;
+    *(__global DTYPE *)(buffer + wave * (MEMSIZE/WAVES)) = sum;
 }
 
 /*
@@ -69,18 +71,15 @@ void test2(__global char *buffer)
     uint tid = get_global_id(0)%256;
     uint wave = get_global_id(0)>>8;  // 256 threads per wave
     uint block;
-    uint blockend = (MEMSIZE/sizeof(uint))/WAVES;
     uint rep = REPS;
-    uint sum = 0;
 
     while (rep--)
     {
-         __global uint *p = (__global uint *)
-                            (buffer + wave * (MEMSIZE/WAVES));
-        for (block = 0; block*2 < blockend; block += 256)
+        INITPTR;
+        for (block = 0; block*2 < BLOCKEND; block += 256)
         {
             // 1st half of block is src, 2nd half is dst
-            *(p + blockend/2 + block + tid) = *(p + block + tid);
+            *(p + BLOCKEND/2 + block + tid) = *(p + block + tid);
         }
     }
 }
